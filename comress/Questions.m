@@ -52,4 +52,20 @@
     return YES;
 }
 
+- (NSArray *)questions
+{
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    
+    [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+
+        FMResultSet *rs = [db executeQuery:@"select * from su_questions"];
+        
+        while ([rs next]) {
+            [arr addObject:[rs resultDictionary]];
+        }
+    }];
+    
+    return arr;
+}
+
 @end

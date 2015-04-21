@@ -1406,7 +1406,7 @@
     self.processLabel.text = [NSString stringWithFormat:@"Downloading your survey... %d/%d",currentPage,totPage];
     
     NSDictionary *params = @{@"currentPage":[NSNumber numberWithInt:page], @"lastRequestTime" : jsonDate};
-    DDLogVerbose(@"startDownloadSpoSkedForPage %@",[myDatabase toJsonString:params]);
+    DDLogVerbose(@"startDownloadSurveyPage %@",[myDatabase toJsonString:params]);
     DDLogVerbose(@"session %@",[myDatabase.userDictionary valueForKey:@"guid"]);
     
     [myDatabase.AfManager POST:[NSString stringWithFormat:@"%@%@",myDatabase.api_url,api_download_survey] parameters:params success:^(AFHTTPRequestOperation *operation, id responseObject) {

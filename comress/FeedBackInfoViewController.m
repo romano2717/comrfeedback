@@ -149,7 +149,24 @@
     {
         NSDictionary *dict = [[dataArray objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
         cell.textLabel.text = [dict valueForKey:@"issue_des"];
-        cell.detailTextLabel.text = [cmrStatus objectAtIndex:[[dict valueForKey:@"status"] intValue]];
+        
+        int crmStatusInt = [[dict valueForKey:@"status"] intValue];
+        
+        NSString *crmStatusStr;
+        
+        switch (crmStatusInt) {
+            case 1:
+                crmStatusStr = @"Start";
+                break;
+            case 4:
+                crmStatusStr = @"Close";
+                
+            default:
+                crmStatusStr = @"Pending";
+                break;
+        }
+        
+        cell.detailTextLabel.text = crmStatusStr;
     }
     else
     {

@@ -21,31 +21,39 @@
 - (NSArray *)fetchSurveyForSegment:(int) segment
 {
     NSMutableArray *surveyArr = [[NSMutableArray alloc] init];
-    
+    NSNumber *zero = [NSNumber numberWithInt:0];
+
     if(segment == 0)
     {
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            FMResultSet *rs = [db executeQuery:@"select * from su_survey order by survey_date desc"];
+            FMResultSet *rs = [db executeQuery:@"select * from su_survey where isMine = ? order by survey_date desc",[NSNumber numberWithBool:YES]];
             
             while ([rs next]) {
                 //check if this survey got atleast 1 answer, if not, don't add this survery
                 FMResultSet *check = [db executeQuery:@"select * from su_answers where client_survey_id = ? or survey_id = ?",[NSNumber numberWithInt:[rs intForColumn:@"client_survey_id"]],[NSNumber numberWithInt:[rs intForColumn:@"survey_id"]]];
                 
-                if([check next] == YES)
+                BOOL checkBool = NO;
+                
+                NSMutableArray *answers = [[NSMutableArray alloc] init];
+                while ([check next]) {
+                    checkBool = YES;
+                    [answers addObject:[check resultDictionary]];
+                }
+                
+                if(checkBool == YES)
                 {
                     NSMutableDictionary *row = [[NSMutableDictionary alloc] init];
+                    
+                    [row setObject:answers forKey:@"answers"];
                     
                     [row setObject:[rs resultDictionary] forKey:@"survey"];
                     
                     //get address details
                     NSNumber *clientAddressId = [NSNumber numberWithInt:[rs intForColumn:@"client_survey_address_id"]];
                     NSNumber *addressId = [NSNumber numberWithInt:[rs intForColumn:@"survey_address_id"]];
-                    FMResultSet *rsAdd;
-                    if([addressId intValue] > 0)
-                        rsAdd = [db executeQuery:@"select * from su_address where client_address_id != ? and (client_address_id = ? or address_id = ?)",[NSNumber numberWithInt:0],clientAddressId,addressId];
-                    else
-                        rsAdd = [db executeQuery:@"select * from su_address where client_address_id != ? and (client_address_id = ?)",[NSNumber numberWithInt:0],clientAddressId];
-                    
+
+                    FMResultSet *rsAdd = [db executeQuery:@"select * from su_address where client_address_id = ? or address_id = ?",clientAddressId,addressId];
+
                     BOOL thereIsAnAddress = NO;
                     
                     while ([rsAdd next]) {
@@ -75,23 +83,32 @@
                 NSMutableArray *surveyArrRow = [[NSMutableArray alloc] init];
                 
                 while ([rs next]) {
+                
                     //check if this survey got atleast 1 answer, if not, don't add this survery
                     FMResultSet *check = [db executeQuery:@"select * from su_answers where client_survey_id = ? or survey_id = ?",[NSNumber numberWithInt:[rs intForColumn:@"client_survey_id"]],[NSNumber numberWithInt:[rs intForColumn:@"survey_id"]]];
                     
-                    if([check next] == YES)
+                    BOOL checkBool = NO;
+                    
+                    NSMutableArray *answers = [[NSMutableArray alloc] init];
+                    while ([check next]) {
+                        checkBool = YES;
+                        [answers addObject:[check resultDictionary]];
+                    }
+                    
+                    if(checkBool == YES)
                     {
+
                         NSMutableDictionary *row = [[NSMutableDictionary alloc] init];
+                        
+                        [row setObject:answers forKey:@"answers"];
                         
                         [row setObject:[rs resultDictionary] forKey:@"survey"];
                         
                         //get address details
                         NSNumber *clientAddressId = [NSNumber numberWithInt:[rs intForColumn:@"client_survey_address_id"]];
                         NSNumber *addressId = [NSNumber numberWithInt:[rs intForColumn:@"survey_address_id"]];
-                        FMResultSet *rsAdd;
-                        if([addressId intValue] > 0)
-                            rsAdd = [db executeQuery:@"select * from su_address where client_address_id != ? and (client_address_id = ? or address_id = ?)",[NSNumber numberWithInt:0],clientAddressId,addressId];
-                        else
-                            rsAdd = [db executeQuery:@"select * from su_address where client_address_id != ? and (client_address_id = ?)",[NSNumber numberWithInt:0],clientAddressId];
+                        
+                        FMResultSet *rsAdd = [db executeQuery:@"select * from su_address where client_address_id = ? or address_id = ?",clientAddressId,addressId];
                         
                         BOOL thereIsAnAddress = NO;
                         
@@ -116,7 +133,86 @@
     }
     else
     {
+        __block BOOL atleastOneOverdueWasFound = NO;
         
+        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+            FMResultSet *rs = [db executeQuery:@"select * from su_survey order by survey_date desc"];
+            
+            while ([rs next]) {
+                
+                NSNumber *clientSurveyId = [NSNumber numberWithInt:[rs intForColumn:@"client_survey_id"]];
+                NSNumber *surveyId = [NSNumber numberWithInt:[rs intForColumn:@"survey_id"]];
+                
+                
+                //check if this survey got feedback
+                FMResultSet *rsChecFeedB = [db executeQuery:@"select * from su_feedback where client_survey_id = ? or survey_id = ? ",clientSurveyId,surveyId];
+                
+                while ([rsChecFeedB next]) {
+                    NSNumber *feedBackId = [NSNumber numberWithInt:[rsChecFeedB intForColumn:@"feedback_id"]];
+                    NSNumber *clientFeedBackId = [NSNumber numberWithInt:[rsChecFeedB intForColumn:@"client_feedback_id"]];
+                    
+                    //check if this feedback got issues with existing post_id
+                    FMResultSet *rsCheckFi = [db executeQuery:@"select * from su_feedback_issue where (client_feedback_id = ? or feedback_id = ?) and (client_post_id != ? or post_id != ?)",clientFeedBackId,feedBackId,zero,zero];
+                    
+                    while ([rsCheckFi next]) {
+                        NSNumber *client_post_id = [NSNumber numberWithInt:[rsCheckFi intForColumn:@"client_post_id"]];
+                        NSNumber *post_id = [NSNumber numberWithInt:[rsCheckFi intForColumn:@"post_id"]];
+                        
+                        NSDate *now = [NSDate date];
+                        NSDate *daysAgo = [now dateByAddingTimeInterval:-overDueDays*24*60*60];
+                        double timestampDaysAgo = [daysAgo timeIntervalSince1970];
+                        
+                        //check if this post is overdue
+                        FMResultSet *rsCheckPost = [db executeQuery:@"select * from post where (client_post_id = ? or post_id = ?) and post_date <= ? and status != ?",client_post_id,post_id,[NSNumber numberWithDouble:timestampDaysAgo],[NSNumber numberWithInt:4]];
+                        
+                        if([rsCheckPost next])
+                            atleastOneOverdueWasFound = YES;
+                        
+                        
+                        //check crm status here and date created
+                    }
+                }
+                
+                
+                
+                //check if this survey got atleast 1 answer, if not, don't add this survery
+                FMResultSet *check = [db executeQuery:@"select * from su_answers where client_survey_id = ? or survey_id = ?",clientSurveyId,surveyId];
+                
+                BOOL checkBool = NO;
+                
+                NSMutableArray *answers = [[NSMutableArray alloc] init];
+                while ([check next]) {
+                    checkBool = YES;
+                    [answers addObject:[check resultDictionary]];
+                }
+                
+                if(checkBool == YES)
+                {
+                    
+                    NSMutableDictionary *row = [[NSMutableDictionary alloc] init];
+                    
+                    [row setObject:answers forKey:@"answers"];
+                    
+                    //get address details
+                    NSNumber *clientAddressId = [NSNumber numberWithInt:[rs intForColumn:@"client_survey_address_id"]];
+                    NSNumber *addressId = [NSNumber numberWithInt:[rs intForColumn:@"survey_address_id"]];
+                    
+                    FMResultSet *rsAdd = [db executeQuery:@"select * from su_address where client_address_id = ? or address_id = ?",clientAddressId,addressId];
+                    
+                    BOOL thereIsAnAddress = NO;
+                    
+                    while ([rsAdd next]) {
+                        thereIsAnAddress = YES;
+                        [row setObject:[rsAdd resultDictionary] forKey:@"address"];
+                    }
+                    
+                    if(atleastOneOverdueWasFound == YES)
+                    {
+                        [surveyArr addObject:row];
+                    }
+                }
+            }
+        }];
     }
     
     
@@ -130,7 +226,7 @@
     if(segment == 0)
     {
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            FMResultSet *rs = [db executeQuery:@"select * from su_answers sa, su_questions sq where sa.client_survey_id = ? or sa.survey_id = ? and ( sa.question_id = sq.question_id)  group by sa.question_id",clientSurveyId,surveyId];
+            FMResultSet *rs = [db executeQuery:@"select * from su_answers sa, su_questions sq where (sa.client_survey_id = ? or sa.survey_id = ?) and ( sa.question_id = sq.question_id)  group by sa.question_id",clientSurveyId,surveyId];
             
             while ([rs next]) {
                 [arr addObject:[rs resultDictionary]];
@@ -151,7 +247,9 @@
                 
                 //get address details
                 NSNumber *client_address_id = [NSNumber numberWithInt:[rs intForColumn:@"client_address_id"]];
-                FMResultSet *rsAdd = [db executeQuery:@"select * from su_address where client_address_id = ?",client_address_id];
+                NSNumber *address_id = [NSNumber numberWithInt:[rs intForColumn:@"address_id"]];
+                
+                FMResultSet *rsAdd = [db executeQuery:@"select * from su_address where client_address_id = ? or address_id = ?",client_address_id,address_id];
                 
                 while ([rsAdd next]) {
                     [row setObject:[rsAdd resultDictionary] forKey:@"address"];
@@ -160,11 +258,15 @@
                 
                 //get post details
                 NSNumber *client_feedback_id = [NSNumber numberWithInt:[rs intForColumn:@"client_feedback_id"]];
-                FMResultSet *rsFeedBackIssue = [db executeQuery:@"select * from su_feedback_issue where client_feedback_id = ?",client_feedback_id];
+                NSNumber *feedback_id = [NSNumber numberWithInt:[rs intForColumn:@"feedback_id"]];
+                
+                FMResultSet *rsFeedBackIssue = [db executeQuery:@"select * from su_feedback_issue where client_feedback_id = ? or feedback_id = ?",client_feedback_id,feedback_id];
                 while ([rsFeedBackIssue next]) {
                     
-                    NSNumber *postId = [NSNumber numberWithInt:[rsFeedBackIssue intForColumn:@"client_post_id"]];
-                    FMResultSet *rspost = [db executeQuery:@"select * from post where client_post_id = ?",postId];
+                    NSNumber *client_post_id = [NSNumber numberWithInt:[rsFeedBackIssue intForColumn:@"client_post_id"]];
+                    NSNumber *post_id = [NSNumber numberWithInt:[rsFeedBackIssue intForColumn:@"post_id"]];
+                    
+                    FMResultSet *rspost = [db executeQuery:@"select * from post where client_post_id = ? or post_id = ?",client_post_id,post_id];
                     
                     while ([rspost next]) {
                         [postsArray addObject:[rspost resultDictionary]];

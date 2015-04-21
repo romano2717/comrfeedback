@@ -244,12 +244,12 @@
         postInfoVc = [self.storyboard instantiateViewControllerWithIdentifier:@"PostInfoViewController"];
         postInfoVc.postInfoDict = self.postInfoDict;
         
-        [self addChildViewController:postInfoVc];
-        postInfoVc.view.bounds = CGRectMake(-15, -15, CGRectGetWidth(self.view.frame) * 0.90, CGRectGetHeight(self.view.frame) * 0.80);
-        postInfoVc.view.layer.borderColor = [UIColor blackColor].CGColor;
-        postInfoVc.view.layer.borderWidth = 2.0f;
-
-
+//        [self addChildViewController:postInfoVc];
+//        postInfoVc.view.bounds = CGRectMake(-15, -15, CGRectGetWidth(self.view.frame) * 0.90, CGRectGetHeight(self.view.frame) * 0.80);
+//        postInfoVc.view.layer.borderColor = [UIColor blackColor].CGColor;
+//        postInfoVc.view.layer.borderWidth = 2.0f;
+//
+//
         postInfoVc.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
         [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
             
@@ -262,6 +262,7 @@
         } completion:^(BOOL finished){
             
         }];
+        
     }
     
 }

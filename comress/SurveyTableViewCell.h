@@ -8,13 +8,19 @@
 
 #import <UIKit/UIKit.h>
 #import "AppWideImports.h"
+#import "Questions.h"
 
 @interface SurveyTableViewCell : UITableViewCell
+{
+    Questions *questions;
+}
 
 @property (nonatomic, weak) IBOutlet UILabel *addressLabel;
-@property (nonatomic, weak) IBOutlet UIImageView *ratingImageView;
+@property (nonatomic, weak) IBOutlet UILabel *satisfactionRatingLabel;
 @property (nonatomic, weak) IBOutlet UILabel *residentName;
 @property (nonatomic, weak) IBOutlet UILabel *dateLabel;
+
+@property (nonatomic) int numOfQuestions;
 
 - (void)initCellWithResultSet:(NSDictionary *)dict;
 

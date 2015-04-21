@@ -10,8 +10,14 @@
 
 @implementation SurveyTableViewCell
 
+@synthesize numOfQuestions;
+
 - (void)awakeFromNib {
     // Initialization code
+    
+    questions = [[Questions alloc] init];
+    
+    numOfQuestions = (int)[[questions questions] count];
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
@@ -25,6 +31,7 @@
     @try {
         NSDictionary *survey = [dict objectForKey:@"survey"];
         NSDictionary *address = [dict objectForKey:@"address"];
+        NSArray *answers = [dict objectForKey:@"answers"];
         
         if(survey != nil)
         {
@@ -41,13 +48,10 @@
             self.dateLabel.text = [NSString stringWithFormat:@"%@",datestring];
             
             int rating = [[survey valueForKey:@"average_rating"] intValue];
-
-            if(rating <= 3)
-                self.ratingImageView.image = [UIImage imageNamed:@"threeOfThreeStars@2x"];
-            if(rating <= 2)
-                self.ratingImageView.image = [UIImage imageNamed:@"twoOfThreeStars@2x"];
-            if(rating <= 1)
-                self.ratingImageView.image = [UIImage imageNamed:@"oneOfThreeStars@2x"];
+            
+            CGFloat percentage = ( (float)rating / (float)answers.count ) * 100.0f;
+            
+            self.satisfactionRatingLabel.text = [NSString stringWithFormat:@"%.2f%% Satisfaction",percentage];
         }
         
         

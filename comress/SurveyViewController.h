@@ -52,4 +52,6 @@
 
 @property (nonatomic, strong) NSMutableArray *closeAreas;
 
+@property (nonatomic) int numberOfQuestionsAnswered;
+
 @end

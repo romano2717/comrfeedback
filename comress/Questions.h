@@ -17,4 +17,7 @@
 
 - (BOOL)updateLastRequestDateWithDate:(NSString *)dateString;
 
+- (NSArray *)questions;
+
+
 @end

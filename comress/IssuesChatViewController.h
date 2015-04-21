@@ -25,6 +25,7 @@
 #import "MBProgressHUD.h"
 #import "Database.h"
 
+#import "MZFormSheetPresentationController.h"
 
 @class IssuesChatViewController;
 

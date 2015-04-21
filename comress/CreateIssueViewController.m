@@ -467,9 +467,6 @@
             
             if(popThisVcBack == YES && i >= selectedContractTypesArr.count - 1) //last loop
             {
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Feedback" message:@"Issues have been raised." delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Ok", nil];
-                [alert show];
-                
                 [self dismissViewControllerAnimated:YES completion:^{
                     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                         Synchronize *sync = [Synchronize sharedManager];

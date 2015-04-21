@@ -726,9 +726,6 @@
                 }];
             }
             
-            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Feedback" message:@"Issues have been raised." delegate:nil cancelButtonTitle:nil otherButtonTitles:@"Ok", nil];
-            [alert show];
-            
             [self.navigationController popViewControllerAnimated:YES];
         }
         

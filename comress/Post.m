@@ -166,8 +166,6 @@ contract_type;
             else //OVERDUE TAB!
             {
                 q = [[NSMutableString alloc] initWithString:[NSString stringWithFormat:@"select * from post where post_type = 1 and post_date <= '%f' and status != %@ ",timestampDaysAgo, finishedStatus]]; //post_type = 1 is ISSUES
-                
-
             }
         }
         

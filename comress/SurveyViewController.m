@@ -18,7 +18,7 @@
 
 @implementation SurveyViewController
 
-@synthesize ratingsImageArray,ratingsStringArray,ratingsImageSelectedArray,selectedRating,ratingsCollectionView,surveyQuestions,locale,segment;
+@synthesize ratingsImageArray,ratingsStringArray,ratingsImageSelectedArray,selectedRating,ratingsCollectionView,surveyQuestions,locale,segment,numberOfQuestionsAnswered;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -76,8 +76,6 @@
      }];
     
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-    
-    
 }
 
 - (void)saveSurvey
@@ -90,7 +88,7 @@
         FMResultSet *rs = [db executeQuery:@"select * from su_survey where client_survey_id = ?",[NSNumber numberWithLongLong:self.currentSurveyId]];
         if([rs next] == NO)
         {
-            BOOL ins = [db executeUpdate:@"insert into su_survey(survey_date) values (?)",now];
+            BOOL ins = [db executeUpdate:@"insert into su_survey(survey_date,created_by) values (?,?)",now,[myDatabase.userDictionary valueForKey:@"user_id"]];
             
             if(!ins)
             {
@@ -186,10 +184,6 @@
     double current_lat = location.coordinate.latitude;
     double current_lng = location.coordinate.longitude;
 
-//    double current_lat = 1.301435;
-//    double current_lng = 103.797132;
-
-    
     self.closeAreas = [[NSMutableArray alloc] init];
     
     [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
@@ -335,6 +329,8 @@
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     
+    numberOfQuestionsAnswered++;
+    
     UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
     
     UIImageView *imageView = (UIImageView *)[cell viewWithTag:1];
@@ -428,7 +424,8 @@
             }
         }];
         
-        int aver = sum / surveyQuestions.count;
+        //int aver = sum / surveyQuestions.count;
+        int aver = sum / numberOfQuestionsAnswered;
         
         //update the average rating of this survey
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {

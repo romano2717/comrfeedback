@@ -52,8 +52,7 @@
 
 - (IBAction)segmentChanged:(id)sender
 {
-    if(segment.selectedSegmentIndex != 2)
-        [self fetchSurvey];
+    [self fetchSurvey];
 }
 
 
@@ -83,7 +82,8 @@
         }
         else
         {
-        
+            clientSurveyId = [[[[surveyArray objectAtIndex:indexPath.row] objectForKey:@"survey"] valueForKey:@"client_survey_id"] intValue];
+            surveyId = [[[[surveyArray objectAtIndex:indexPath.row] objectForKey:@"survey"] valueForKey:@"survey_id"] intValue];
         }
         
         
@@ -97,6 +97,13 @@
 - (void)fetchSurvey
 {
     surveyArray = [survey fetchSurveyForSegment:(int)segment.selectedSegmentIndex];
+    DDLogVerbose(@"surveyArray %@",surveyArray);
+    
+    if(segment.selectedSegmentIndex == 2)//set overdue badge if there's any
+    {
+        if(surveyArray.count > 0)
+            [segment setBadgeNumber:surveyArray.count forSegmentAtIndex:2];
+    }
     
     [self.surveyTableView reloadData];
 }
@@ -121,6 +128,8 @@
         NSArray *arr = [[surveyArray firstObject] objectForKey:key];
         return arr.count;
     }
+    else
+        return surveyArray.count;
     
     return 0;
 }
@@ -131,8 +140,8 @@
         return 1;
     else if (segment.selectedSegmentIndex == 1)
         return [[[surveyArray firstObject] allKeys] count];
-    
-    return 1;
+    else
+        return 1;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -151,6 +160,8 @@
         dict = [[[surveyArray firstObject] objectForKey:key] objectAtIndex:indexPath.row];
         
     }
+    else
+        dict = [surveyArray objectAtIndex:indexPath.row];
     
         
     [cell initCellWithResultSet:dict];

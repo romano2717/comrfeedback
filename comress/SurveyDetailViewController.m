@@ -24,6 +24,9 @@
     survey = [[Survey alloc] init];
     
     
+    __block int numOfQuestionsAnswered = 0;
+    __block CGFloat percentage = 0.0;
+    
     //get average rating of this survey
     [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
         FMResultSet *rs = [db executeQuery:@"select average_rating from su_survey where client_survey_id = ? or survey_id = ?",clientSurveyId,surveyId];
@@ -33,14 +36,16 @@
             averageRating = [rs intForColumn:@"average_rating"];
         }
         
-        if(averageRating <= 3)
-            self.averageRatingImageView.image = [UIImage imageNamed:@"threeOfThreeStars@2x"];
-        if(averageRating <= 2)
-            self.averageRatingImageView.image = [UIImage imageNamed:@"twoOfThreeStars@2x"];
-        if(averageRating <= 1)
-            self.averageRatingImageView.image = [UIImage imageNamed:@"oneOfThreeStars@2x"];
+        //get the number of questions answered by this survey
+        FMResultSet *rsAnswered = [db executeQuery:@"select count(*) as count from su_answers where client_survey_id = ? or survey_id = ?",clientSurveyId,surveyId];
+        while ([rsAnswered next]) {
+            numOfQuestionsAnswered = [rsAnswered intForColumn:@"count"];
+        }
         
+        percentage = ( (float)averageRating / (float)numOfQuestionsAnswered ) * 100.0f;
     }];
+    
+    self.percentageRating.text = [NSString stringWithFormat:@"%.2f%%",percentage];
 }
 
 - (void)viewWillAppear:(BOOL)animated

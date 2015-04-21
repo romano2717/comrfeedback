@@ -16,6 +16,7 @@
 #import "ResidentPopInfoViewController.h"
 #import "FeedBackInfoViewController.h"
 
+
 @interface SurveyDetailViewController : UIViewController<UITableViewDataSource,UITableViewDelegate>
 {
     Survey *survey;
@@ -26,7 +27,7 @@
 @property (nonatomic, strong) NSNumber *surveyId;
 
 @property (nonatomic, weak) IBOutlet UITableView *surveyDetailTableView;
-@property (nonatomic, weak) IBOutlet UIImageView *averageRatingImageView;
+@property (nonatomic, weak) IBOutlet UILabel *percentageRating;
 @property (nonatomic, weak) IBOutlet UISegmentedControl *segment;
 
 @property (nonatomic, strong) NSArray *dataArray;
