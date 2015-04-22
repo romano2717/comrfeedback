@@ -76,12 +76,9 @@
 @property (nonatomic) BOOL didAddFeedBack;
 
 
-/*pop-up delegate*/
-- (void)closePopUp:(UIViewController *)viewcontroller;
+- (void)selectedTableRowLocation:(NSNotification *)notif;
 
-- (void)selectedTableRow:(NSUInteger)rowNum;
-
-- (void)closePopUpWithLocationReload:(BOOL) reload;
+- (void)closePopUpWithLocationReload:(NSNotification *)notif;
 
 
 

@@ -199,7 +199,7 @@
             double distance = (acos(sin(current_lat * M_PI / 180) * sin(lat * M_PI / 180) + cos(current_lat * M_PI / 180) * cos(lat * M_PI / 180) * cos((current_lng - lng) * M_PI / 180)) * 180 / M_PI) * 60 * 1.1515 * 1.609344;
             
             double distanceInMeters = distance * 1000;
-            
+
             if(distanceInMeters <= 500) //500 m
             {
                 [self.closeAreas addObject:dict];

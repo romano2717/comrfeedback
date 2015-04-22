@@ -26,6 +26,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+
     
     myDatabase = [Database sharedMyDbManager];
     
@@ -47,7 +48,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadIssuesList) name:@"reloadIssuesList" object:nil];
     
     //notification for reloading issues when app recover from background to active;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(fetchPostFromRecovery) name:UIApplicationDidBecomeActiveNotification object:nil];
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(fetchPostFromRecovery) name:UIApplicationDidBecomeActiveNotification object:nil];
     
     //turn on bulb icon for new unread posts
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(toggleBulbIcon:) name:@"toggleBulbIcon" object:nil];
@@ -120,7 +121,7 @@
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"downloadNewItems" object:nil];
     
-//    [self fetchPosts];
+    [self fetchPostsWithNewIssuesUp:NO];
     
     [(UIRefreshControl *)sender endRefreshing];
 }
@@ -139,7 +140,8 @@
 {
     [super viewDidAppear:animated];
     
-    [self fetchPostsWithNewIssuesUp:NO];
+    if(myDatabase.initializingComplete == 1)
+        [self fetchPostsWithNewIssuesUp:NO];
     
     [self updateBadgeCount];
 }
@@ -212,7 +214,10 @@
         else
             postId = sender;
         
-        int ServerPostId = [[[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] intValue];
+        int ServerPostId = 0;
+        
+        if([[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] != [NSNull null])
+            ServerPostId = [[[[dict objectForKey:postId] objectForKey:@"post"] valueForKey:@"post_id"] intValue];
         
         
         BOOL isFiltered = NO;
@@ -235,6 +240,8 @@
 #pragma mark - fetch posts
 - (void)fetchPostsWithNewIssuesUp:(BOOL)newIssuesUp
 {
+    if(myDatabase.initializingComplete == 0)
+        return;
     
     @try {
         post = nil;

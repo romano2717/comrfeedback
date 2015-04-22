@@ -38,7 +38,7 @@
 
 - (void) copyDbToDocumentsDir;
 
-- (BOOL) migrateDatabase;
+- (void) migrateDatabase;
 
 - (void) alertMessageWithMessage:(NSString *)message;
 

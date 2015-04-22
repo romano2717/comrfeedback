@@ -20,20 +20,14 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
-
+    myDatabase = [Database sharedMyDbManager];
     
-    //-- Set Notification
-
-    // iOS 8 Notifications
-    [application registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
-    
-    [application registerForRemoteNotifications];
+    //migrate database
+    //[myDatabase migrateDatabase];
     
     
     if(allowLogging)
         [[AFNetworkActivityLogger sharedLogger] startLogging];
-    
-    myDatabase = [Database sharedMyDbManager];
     
     //logging mechanism;
     fileLogger = [[DDFileLogger alloc] init];
@@ -45,8 +39,7 @@
     [DDLog addLogger:[DDASLLogger sharedInstance]];
     [DDLog addLogger:[DDTTYLogger sharedInstance]];
     
-    //migrate database
-    //[myDatabase migrateDatabase];
+    
 
     sync = [Synchronize  sharedManager];
     [sync kickStartSync];
@@ -204,6 +197,10 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    
+    [application registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge) categories:nil]];
+    
+    [application registerForRemoteNotifications];
     
     application.applicationIconBadgeNumber = 0;
     

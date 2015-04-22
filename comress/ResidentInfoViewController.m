@@ -9,9 +9,13 @@
 #import "ResidentInfoViewController.h"
 #import "Synchronize.h"
 
+#import "MZFormSheetController.h"
+#import "MZCustomTransition.h"
+#import "MZFormSheetSegue.h"
+
 #define kBgQueue dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
 
-@interface ResidentInfoViewController ()
+@interface ResidentInfoViewController ()<MZFormSheetBackgroundWindowDelegate>
 {
 
 }
@@ -34,6 +38,14 @@
     [self generateData];
     
     self.scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(closePopUpWithLocationReload:) name:@"closePopUpWithLocationReload" object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectedTableRowLocation:) name:@"selectedTableRowLocation" object:nil];
+    
+    
+    self.title = @"Data Protection";
 }
 
 
@@ -66,6 +78,9 @@
         CGRect scrollViewFrame = self.scrollView.frame;
         
         [self.scrollView scrollRectToVisible:CGRectMake(scrollViewFrame.origin.x, residentTextFieldRect.origin.y - 10, scrollViewFrame.size.width, scrollViewFrame.size.height) animated:YES];
+     
+        residentBlockId = 0;
+        self.residentPostalCode = @"-1";
         
         textField.text = @"";
         [textField becomeFirstResponder];
@@ -73,6 +88,9 @@
     
     else if (textField.tag == 100) //survey address
     {
+        blockId = 0;
+        self.postalCode = @"-1";
+        
         textField.text = @"";
         [textField becomeFirstResponder];
     }
@@ -93,9 +111,16 @@
     if([[result valueForKey:@"CustomObject"] isKindOfClass:[NSDictionary class]] == NO) //user typed some shit!
     {
         if([textField isEqual:self.surveyAddressTxtFld])
+        {
+            blockId = 0;
             self.postalCode = @"-1"; //because tree got 0 postal code
+        }
+        
         else if ([textField isEqual:self.residentAddressTxtFld])
+        {
+            residentBlockId = 0;
             self.residentPostalCode = @"-1"; //because tree got 0 postal code
+        }
         
         return;
     }
@@ -156,6 +181,8 @@
     self.disclaimerView.hidden = YES;
     
     didTakeActionOnDataPrivacyTerms = YES;
+    
+    self.title = @"Resident Information";
     
     [self preFillOtherInfo];
 }
@@ -226,59 +253,63 @@
     postInfoVc.delegate = self;
     postInfoVc.foundPlacesArray = foundPlacesArray;
     
-    [self addChildViewController:postInfoVc];
-    postInfoVc.view.bounds = CGRectMake(-1, 0, CGRectGetWidth(self.view.frame) * 0.90, CGRectGetHeight(self.view.frame) * 0.80);
-    postInfoVc.view.layer.borderColor = [UIColor blackColor].CGColor;
-    postInfoVc.view.layer.borderWidth = 2.0f;
     
+    MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:postInfoVc];
     
-    postInfoVc.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
-    [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
-
-        postInfoVc.view.transform = CGAffineTransformIdentity;
-        [self.view addSubview:postInfoVc.view];
-        [postInfoVc didMoveToParentViewController:self];
-    } completion:^(BOOL finished){
-
-    }];
-}
-
-- (void)closePopUp:(UIViewController *)viewcontroller
-{
-    postInfoVc.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
-
-    [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
+    formSheet.presentedFormSheetSize = CGSizeMake(300, 298);
+    //    formSheet.transitionStyle = MZFormSheetTransitionStyleSlideFromTop;
+    formSheet.shadowRadius = 2.0;
+    formSheet.shadowOpacity = 0.3;
+    formSheet.shouldDismissOnBackgroundViewTap = YES;
+    formSheet.shouldCenterVertically = YES;
+    formSheet.movementWhenKeyboardAppears = MZFormSheetWhenKeyboardAppearsCenterVertically;
+    
+    // If you want to animate status bar use this code
+    formSheet.didTapOnBackgroundViewCompletionHandler = ^(CGPoint location) {
         
-        postInfoVc.view.transform = CGAffineTransformIdentity;
-        [self.view addSubview:postInfoVc.view];
-        
-    } completion:^(BOOL finished){
-        
+    };
+    
+    formSheet.willPresentCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will present");
+    };
+    formSheet.transitionStyle = MZFormSheetTransitionStyleCustom;
+    
+    [MZFormSheetController sharedBackgroundWindow].formSheetBackgroundWindowDelegate = self;
+    
+    [self mz_presentFormSheetController:formSheet animated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        DDLogVerbose(@"did present");
     }];
     
+    formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will dismiss");
+    };
     
-    [postInfoVc removeFromParentViewController];
-    [postInfoVc.view removeFromSuperview];
-    
-    if(self.dismissPopupByReload == NO)
-        [self validatePostalCode];
 }
+
+
 
 #pragma mark - user tapped a nearby location from pop-up
--(void)selectedTableRow:(NSUInteger)rowNum
+-(void)selectedTableRowLocation:(NSNotification *)notif
 {
-    [self closePopUp:postInfoVc];
+    [MBProgressHUD hideAllHUDsForView:self.view animated:NO];
+    
+    NSNumber *row = [[notif userInfo] valueForKey:@"row"];
+    int rowNum = [row intValue];
     
     self.surveyAddressTxtFld.text = [NSString stringWithFormat:@"%@ %@",[[foundPlacesArray objectAtIndex:rowNum] valueForKey:@"block_no"],[[foundPlacesArray objectAtIndex:rowNum] valueForKey:@"street_name"]] ;
     self.residentAddressTxtFld.text = [NSString stringWithFormat:@"%@ %@",[[foundPlacesArray objectAtIndex:rowNum] valueForKey:@"block_no"],[[foundPlacesArray objectAtIndex:rowNum] valueForKey:@"street_name"]];
     self.postalCode = [[foundPlacesArray objectAtIndex:rowNum] valueForKey:@"postal_code"];
     
-    [self validatePostalCode];
+    [self mz_dismissFormSheetControllerAnimated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        [self validatePostalCode];
+    }];
 }
 
-- (void)closePopUpWithLocationReload:(BOOL)reload
+- (void)closePopUpWithLocationReload:(NSNotification *)notif
 {
-    [self closePopUp:postInfoVc];
+    [MBProgressHUD hideAllHUDsForView:self.view animated:NO];
+    
+    BOOL reload = [[[notif userInfo] valueForKey:@"reload"] boolValue];
     
     if(reload)
     {
@@ -300,13 +331,21 @@
         
         [locationManager startUpdatingLocation];
         
-        [self performSelector:@selector(locationReloaded) withObject:nil afterDelay:7.0];
+        [self mz_dismissFormSheetControllerAnimated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+            [self performSelector:@selector(locationReloaded) withObject:nil afterDelay:7.0];
+        }];
+    }
+    else
+    {
+        [self mz_dismissFormSheetControllerAnimated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+            [self validatePostalCode];
+        }];
     }
 }
 
 - (void)locationReloaded
 {
-    [MBProgressHUD hideHUDForView:self.view animated:YES];
+    [MBProgressHUD hideAllHUDsForView:self.view animated:NO];
     
     [self preFillOtherInfo];
 }
@@ -512,11 +551,12 @@
         NSString *resident_email = self.emailTxFld.text;
         
         BOOL up;
-//        if([action isEqualToString:@"feedback"])
-//        {
-        DDLogVerbose(@"self.postalCode %@",self.postalCode);
-        DDLogVerbose(@"self.residentPostalCode %@",self.residentPostalCode);
+
+        long long lastSurveyAddressId = 0;
+        long long lastResidentAddressId = 0;
         
+        if(self.surveyAddressTxtFld.text != nil && self.surveyAddressTxtFld.text.length > 0 && ![self.postalCode isEqualToString:@"-1"] && self.postalCode.length > 0 && blockId != 0)
+        {
             BOOL insSurveyAddress = [db executeUpdate:@"insert into su_address (address, unit_no, specify_area, postal_code, block_id) values (?,?,?,?,?)",self.surveyAddressTxtFld.text, self.unitNoTxtFld.text, self.areaTxtFld.text, self.postalCode, blockId];
             
             if(!insSurveyAddress)
@@ -525,9 +565,17 @@
                 return;
             }
             
-            long long lastSurveyAddressId = [db lastInsertRowId];
-            
-            
+            lastSurveyAddressId = [db lastInsertRowId];
+        }
+        else
+        {
+            [myDatabase alertMessageWithMessage:@"Please select a valid survey address within the GRC"];
+            return;
+        }
+        
+        
+        if(self.residentAddressTxtFld.text != nil && self.residentAddressTxtFld.text.length > 0)
+        {
             BOOL insResidentAddress = [db executeUpdate:@"insert into su_address (address, unit_no, specify_area,postal_code, block_id) values (?,?,?,?,?)",self.residentAddressTxtFld.text, self.unitNoTxtFld.text, self.areaTxtFld.text, self.residentPostalCode, residentBlockId];
             
             if(!insResidentAddress)
@@ -536,31 +584,33 @@
                 return;
             }
             
-            long long lastResidentAddressId = [db lastInsertRowId];
-            
-            //get survey address
-            FMResultSet *rsSurveyAddress = [db executeQuery:@"select * from su_address where client_address_id = ?",[NSNumber numberWithLongLong:lastSurveyAddressId]];
-            NSDictionary *surveyAddressDict;
-            
-            while ([rsSurveyAddress next]) {
-                surveyAddressDict = [rsSurveyAddress resultDictionary];
-            }
-            
-            //get resident address
-            FMResultSet *rsResidentAddress = [db executeQuery:@"select * from su_address where client_address_id = ?",[NSNumber numberWithLongLong:lastResidentAddressId]];
-            NSDictionary *residentAddressDict;
-            
-            while ([rsResidentAddress next]) {
-                residentAddressDict = [rsResidentAddress resultDictionary];
-            }
-            
-            
-            //update su_survey
-            NSNumber *client_survey_address_id = [NSNumber numberWithInt:[[surveyAddressDict valueForKey:@"client_address_id"] intValue]];
-            NSNumber *client_resident_address_id = [NSNumber numberWithInt:[[residentAddressDict valueForKey:@"client_address_id"] intValue]];
-            
-            up = [db executeUpdate:@"update su_survey set client_survey_address_id = ?, survey_date = ?, resident_name = ?, resident_age_range = ?, resident_gender = ?, resident_race = ?, client_resident_address_id = ?, average_rating = ?, resident_contact = ?, resident_email = ?,other_contact = ? where client_survey_id = ?",client_survey_address_id,survey_date,resident_name,resident_age_range,resident_gender,resident_race,client_resident_address_id,average_rating,resident_contact,resident_email,other_resident_contact,[NSNumber numberWithLongLong:currentSurveyId]];
-//        }
+            lastResidentAddressId = [db lastInsertRowId];
+        }
+        
+        
+        //get survey address
+        FMResultSet *rsSurveyAddress = [db executeQuery:@"select * from su_address where client_address_id = ?",[NSNumber numberWithLongLong:lastSurveyAddressId]];
+        NSDictionary *surveyAddressDict;
+        
+        while ([rsSurveyAddress next]) {
+            surveyAddressDict = [rsSurveyAddress resultDictionary];
+        }
+        
+        //get resident address
+        FMResultSet *rsResidentAddress = [db executeQuery:@"select * from su_address where client_address_id = ?",[NSNumber numberWithLongLong:lastResidentAddressId]];
+        NSDictionary *residentAddressDict;
+        
+        while ([rsResidentAddress next]) {
+            residentAddressDict = [rsResidentAddress resultDictionary];
+        }
+        
+        
+        //update su_survey
+        NSNumber *client_survey_address_id = [NSNumber numberWithInt:[[surveyAddressDict valueForKey:@"client_address_id"] intValue]];
+        NSNumber *client_resident_address_id = [NSNumber numberWithInt:[[residentAddressDict valueForKey:@"client_address_id"] intValue]];
+        
+        up = [db executeUpdate:@"update su_survey set client_survey_address_id = ?, survey_date = ?, resident_name = ?, resident_age_range = ?, resident_gender = ?, resident_race = ?, client_resident_address_id = ?, average_rating = ?, resident_contact = ?, resident_email = ?,other_contact = ? where client_survey_id = ?",client_survey_address_id,survey_date,resident_name,resident_age_range,resident_gender,resident_race,client_resident_address_id,average_rating,resident_contact,resident_email,other_resident_contact,[NSNumber numberWithLongLong:currentSurveyId]];
+
         if ([action isEqualToString:@"done"])
         {
             up = [db executeUpdate:@"update su_survey set status = ? where client_survey_id = ? ",[NSNumber numberWithInt:1],[NSNumber numberWithLongLong:currentSurveyId]];

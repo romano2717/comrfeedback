@@ -59,6 +59,95 @@
         cell.textLabel.textColor = [UIColor whiteColor];
     }
     
+//    Apply Following Action Status Logic.
+//    1. Start -> Completed
+//    2. Start -> Stop
+//    3. Stop - > Reopen
+//    4. Reopen -> Completed
+//    5. Reopen -> Stop
+//    6. Completed -> Reopen
+//    7. Completed - > Close
+    
+    cell.userInteractionEnabled = NO;
+    cell.backgroundColor = [UIColor lightGrayColor];
+    
+    switch ([selectedStatus intValue]) {
+        case 1: //start
+        {
+//            if(indexPath.row == 0) //pending
+//            {
+//                cell.userInteractionEnabled = YES;
+//                cell.backgroundColor = [UIColor whiteColor];
+//            }
+            
+            if(indexPath.row == 2) //stop
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            
+            if(indexPath.row == 3)//completed
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            
+            break;
+        }
+        
+        case 2: //stop
+        {
+            if(indexPath.row == 1)//start
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            break;
+            
+        }
+            
+        case 3: //completed
+        {
+            if(indexPath.row == 0)//pending
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            
+            if(indexPath.row == 4) //close
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            break;
+        }
+            
+        case 4: //close
+        {
+//            if(indexPath.row == 0) //pending
+//            {
+//                cell.userInteractionEnabled = YES;
+//                cell.backgroundColor = [UIColor whiteColor];
+//            }
+            
+            break;
+        }
+            
+        case 0: //pending
+        {
+            if(indexPath.row == 1) //start
+            {
+                cell.userInteractionEnabled = YES;
+                cell.backgroundColor = [UIColor whiteColor];
+            }
+            
+            break;
+        }
+            
+        default:
+            break;
+    }
+    
     // Configure the cell...
     cell.textLabel.text = [self.status objectAtIndex:indexPath.row];
     
@@ -67,10 +156,9 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if([self.delegate respondsToSelector:@selector(selectedTableRow:)])
-    {
-        [self.delegate selectedTableRow:indexPath.row];
-    }
+    NSNumber *row = [NSNumber numberWithInt:(int)indexPath.row];
+        
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"selectedTableRow" object:nil userInfo:@{@"row":row}];
 }
 
 /*

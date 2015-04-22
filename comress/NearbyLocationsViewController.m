@@ -60,21 +60,24 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if([self.delegate respondsToSelector:@selector(selectedTableRow:)])
-    {
-        [self.delegate selectedTableRow:indexPath.row];
-    }
+    NSNumber *row = [NSNumber numberWithInt:(int)indexPath.row];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"selectedTableRowLocation" object:nil userInfo:@{@"row":row}];
 }
 
 
 - (IBAction)cancel:(id)sender
 {
-    [self.delegate closePopUpWithLocationReload:NO];
+    NSNumber *noBool = [NSNumber numberWithBool:NO];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"closePopUpWithLocationReload" object:nil userInfo:@{@"reload":noBool}];
 }
 
 - (IBAction)reloadLocationSearch:(id)sender
 {
-    [self.delegate closePopUpWithLocationReload:YES];
+    NSNumber *yesBool = [NSNumber numberWithBool:YES];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"closePopUpWithLocationReload" object:nil userInfo:@{@"reload":yesBool}];
 }
 
 @end

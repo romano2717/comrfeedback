@@ -36,7 +36,7 @@
     
     //outgoing
     //[self uploadPostFromSelf:YES];
-    syncKickstartTimerOutgoing = [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(uploadPost) userInfo:nil repeats:YES];
+    syncKickstartTimerOutgoing = [NSTimer scheduledTimerWithTimeInterval:3.0 target:self selector:@selector(uploadPost) userInfo:nil repeats:YES];
 
     //[self startDownload];
     downloadIsTriggeredBySelf = YES;
@@ -150,105 +150,105 @@
     });
     
     
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download post
-            FMResultSet *rs = [db executeQuery:@"select date from post_last_request_date"];
-            
-            if([rs next])
-            {
-                jsonDate = (NSDate *)[rs dateForColumn:@"date"];
-                
-            }
-            [self startDownloadPostForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download post image
-            FMResultSet *rs2 = [db executeQuery:@"select date from post_image_last_request_date"];
-            
-            if([rs2 next])
-            {
-                jsonDate = (NSDate *)[rs2 dateForColumn:@"date"];
-                
-            }
-            [self startDownloadPostImagesForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download comments
-            FMResultSet *rs3 = [db executeQuery:@"select date from comment_last_request_date"];
-            
-            if([rs3 next])
-            {
-                jsonDate = (NSDate *)[rs3 dateForColumn:@"date"];
-            }
-            [self startDownloadCommentsForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download comment noti
-            FMResultSet *rs4 = [db executeQuery:@"select date from comment_noti_last_request_date"];
-            
-            if([rs4 next])
-            {
-                jsonDate = (NSDate *)[rs4 dateForColumn:@"date"];
-            }
-            [self startDownloadCommentNotiForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download questions
-            FMResultSet *rs55 = [db executeQuery:@"select date from su_questions_last_req_date"];
-            
-            if([rs55 next])
-            {
-                jsonDate = (NSDate *)[rs55 dateForColumn:@"date"];
-            }
-            [self startDownloadQuestionsForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download survey
-            FMResultSet *rs5 = [db executeQuery:@"select date from su_survey_last_req_date"];
-            
-            if([rs5 next])
-            {
-                jsonDate = (NSDate *)[rs5 dateForColumn:@"date"];
-            }
-            [self startDownloadSurveyPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
-            //download feedback issues list
-            FMResultSet *rs6 = [db executeQuery:@"select date from su_feedback_issues_last_req_date"];
-            
-            if([rs6 next])
-            {
-                jsonDate = (NSDate *)[rs6 dateForColumn:@"date"];
-            }
-            [self startDownloadFeedBackIssuesForPage:1 totalPage:0 requestDate:jsonDate];
-        }];
-    });
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download post
+//            FMResultSet *rs = [db executeQuery:@"select date from post_last_request_date"];
+//            
+//            if([rs next])
+//            {
+//                jsonDate = (NSDate *)[rs dateForColumn:@"date"];
+//                
+//            }
+//            [self startDownloadPostForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download post image
+//            FMResultSet *rs2 = [db executeQuery:@"select date from post_image_last_request_date"];
+//            
+//            if([rs2 next])
+//            {
+//                jsonDate = (NSDate *)[rs2 dateForColumn:@"date"];
+//                
+//            }
+//            [self startDownloadPostImagesForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download comments
+//            FMResultSet *rs3 = [db executeQuery:@"select date from comment_last_request_date"];
+//            
+//            if([rs3 next])
+//            {
+//                jsonDate = (NSDate *)[rs3 dateForColumn:@"date"];
+//            }
+//            [self startDownloadCommentsForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download comment noti
+//            FMResultSet *rs4 = [db executeQuery:@"select date from comment_noti_last_request_date"];
+//            
+//            if([rs4 next])
+//            {
+//                jsonDate = (NSDate *)[rs4 dateForColumn:@"date"];
+//            }
+//            [self startDownloadCommentNotiForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download questions
+//            FMResultSet *rs55 = [db executeQuery:@"select date from su_questions_last_req_date"];
+//            
+//            if([rs55 next])
+//            {
+//                jsonDate = (NSDate *)[rs55 dateForColumn:@"date"];
+//            }
+//            [self startDownloadQuestionsForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download survey
+//            FMResultSet *rs5 = [db executeQuery:@"select date from su_survey_last_req_date"];
+//            
+//            if([rs5 next])
+//            {
+//                jsonDate = (NSDate *)[rs5 dateForColumn:@"date"];
+//            }
+//            [self startDownloadSurveyPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
+//    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+//        [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
+//            NSDate *jsonDate = [self deserializeJsonDateString:@"/Date(1388505600000+0800)/"];
+//            //download feedback issues list
+//            FMResultSet *rs6 = [db executeQuery:@"select date from su_feedback_issues_last_req_date"];
+//            
+//            if([rs6 next])
+//            {
+//                jsonDate = (NSDate *)[rs6 dateForColumn:@"date"];
+//            }
+//            [self startDownloadFeedBackIssuesForPage:1 totalPage:0 requestDate:jsonDate];
+//        }];
+//    });
 }
 
 - (void)uploadPostStatusChangeFromSelf:(BOOL)thisSelf
@@ -1733,8 +1733,7 @@
         
         int totalPage = [[dict valueForKey:@"TotalPages"] intValue];
         
-        NSDate *LastRequestDate = [dict valueForKey:@"LastRequestDate"];
-        
+        NSDate *LastRequestDate =  [self deserializeJsonDateString:[dict valueForKey:@"LastRequestDate"]];
         
         if(currentPage < totalPage)
         {
@@ -2102,10 +2101,6 @@
                                 
                             });
                         }
-                        
-                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                            [[NSNotificationCenter defaultCenter] postNotificationName:@"reloadIssuesList" object:nil];
-                        });
                     }];
                     
                     if(CommentId > 0)//the image was in a form of a comment, so we need to reload our chat view to reflect the image
@@ -2145,6 +2140,10 @@
             });
         }
     }
+    
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+//        [[NSNotificationCenter defaultCenter] postNotificationName:@"reloadIssuesList" object:nil];
+//    });
 }
 
 
@@ -2381,7 +2380,7 @@
 
 - (void)notifyLocallyWithMessage:(NSString *)message
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"reloadIssuesList" object:nil];
+    //[[NSNotificationCenter defaultCenter] postNotificationName:@"reloadIssuesList" object:nil];
     
     UILocalNotification *localNotification = [[UILocalNotification alloc] init];
     localNotification.fireDate = [NSDate date];

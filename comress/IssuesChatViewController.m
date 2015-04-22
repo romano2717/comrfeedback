@@ -9,13 +9,17 @@
 #import "IssuesChatViewController.h"
 #import "Synchronize.h"
 
-@interface IssuesChatViewController ()
+#import "MZFormSheetController.h"
+#import "MZCustomTransition.h"
+#import "MZFormSheetSegue.h"
+
+@interface IssuesChatViewController ()<MZFormSheetBackgroundWindowDelegate>
 
 @end
 
 @implementation IssuesChatViewController
 
-@synthesize postId,postDict,commentsArray,theNewSelectedStatus,isFiltered,ServerPostId,popUpIsOpen;
+@synthesize postId,postDict,commentsArray,theNewSelectedStatus,isFiltered,ServerPostId;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -51,6 +55,10 @@
     theNewSelectedStatus = nil;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(fetchComments) name:@"reloadChatView" object:nil];
+    
+    
+    //add watcher when user tapped a cell on this pop-up window
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectedTableRow:) name:@"selectedTableRow" object:nil];
 }
 
 - (void)fetchComments
@@ -149,9 +157,11 @@
 }
 
 #pragma mark - status post update
--(void)selectedTableRow:(NSUInteger)rowNum
+-(void)selectedTableRow:(NSNotification *)notif
 {
-    [self closeAllPopUp];
+    NSNumber *NSrowNum = [[notif userInfo] valueForKey:@"row"];
+    int rowNum = [NSrowNum intValue];
+    
     
     NSDate *date = [NSDate date];
 
@@ -194,105 +204,93 @@
     [post updatePostStatusForClientPostId:[NSNumber numberWithInt:self.postId] withStatus:[NSNumber numberWithInteger:rowNum]];
     
     [self finishSendingMessageAnimated:YES];
+    
+    [self mz_dismissFormSheetControllerAnimated:YES completionHandler:nil];
 }
 
 - (IBAction)postStatusActions:(id)sender
 {
-    if(popUpIsOpen)
-        [self closeAllPopUp];
+    
+    postStatusVc = [[PostStatusTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    postStatusVc.delegate = self;
+    
+    NSNumber *postStatus;
+    
+    if(theNewSelectedStatus == nil)
+        postStatus = [NSNumber numberWithInt:[[[[postDict objectForKey:[[postDict allKeys] objectAtIndex:0]] objectForKey:@"post"] valueForKey:@"status"] intValue]];
     else
-    {
-        postStatusVc = [[PostStatusTableViewController alloc] initWithStyle:UITableViewStylePlain];
-        postStatusVc.delegate = self;
+        postStatus = theNewSelectedStatus;
+    
+    postStatusVc.selectedStatus = postStatus;
+    
+    MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:postStatusVc];
+    
+    formSheet.presentedFormSheetSize = CGSizeMake(300, 298);
+    //    formSheet.transitionStyle = MZFormSheetTransitionStyleSlideFromTop;
+    formSheet.shadowRadius = 2.0;
+    formSheet.shadowOpacity = 0.3;
+    formSheet.shouldDismissOnBackgroundViewTap = YES;
+    formSheet.shouldCenterVertically = YES;
+    formSheet.movementWhenKeyboardAppears = MZFormSheetWhenKeyboardAppearsCenterVertically;
+    
+    // If you want to animate status bar use this code
+    formSheet.didTapOnBackgroundViewCompletionHandler = ^(CGPoint location) {
         
-        NSNumber *postStatus;
-        
-        if(theNewSelectedStatus == nil)
-            postStatus = [NSNumber numberWithInt:[[[[postDict objectForKey:[[postDict allKeys] objectAtIndex:0]] objectForKey:@"post"] valueForKey:@"status"] intValue]];
-        else
-            postStatus = theNewSelectedStatus;
-        
-        [self addChildViewController:postStatusVc];
-        postStatusVc.view.bounds = CGRectMake(-15, -15, CGRectGetWidth(self.view.frame) * 0.90, 280.0);
-        postStatusVc.view.layer.borderColor = [UIColor blackColor].CGColor;
-        postStatusVc.view.layer.borderWidth = 2.0f;
-
-        
-        postStatusVc.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
-        [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
-            
-            postStatusVc.view.transform = CGAffineTransformIdentity;
-            [self.view addSubview:postStatusVc.view];
-            
-            [postStatusVc didMoveToParentViewController:self];
-            
-            popUpIsOpen = YES;
-            
-        } completion:^(BOOL finished){
-            
-        }];
-    }
+    };
+    
+    formSheet.willPresentCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will present");
+    };
+    formSheet.transitionStyle = MZFormSheetTransitionStyleCustom;
+    
+    [MZFormSheetController sharedBackgroundWindow].formSheetBackgroundWindowDelegate = self;
+    
+    [self mz_presentFormSheetController:formSheet animated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        DDLogVerbose(@"did present");
+    }];
+    
+    formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will dismiss");
+    };
 }
 
 #pragma mark show post info
 - (void)popPostInformation
 {
-    if(popUpIsOpen)
-        [self closeAllPopUp];
-    else
-    {
-        postInfoVc = [self.storyboard instantiateViewControllerWithIdentifier:@"PostInfoViewController"];
-        postInfoVc.postInfoDict = self.postInfoDict;
-        
-//        [self addChildViewController:postInfoVc];
-//        postInfoVc.view.bounds = CGRectMake(-15, -15, CGRectGetWidth(self.view.frame) * 0.90, CGRectGetHeight(self.view.frame) * 0.80);
-//        postInfoVc.view.layer.borderColor = [UIColor blackColor].CGColor;
-//        postInfoVc.view.layer.borderWidth = 2.0f;
-//
-//
-        postInfoVc.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
-        [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
-            
-            postInfoVc.view.transform = CGAffineTransformIdentity;
-            [self.view addSubview:postInfoVc.view];
-            
-            [postInfoVc didMoveToParentViewController:self];
-            
-            popUpIsOpen = YES;
-        } completion:^(BOOL finished){
-            
-        }];
-        
-    }
-    
-}
 
-- (void)closeAllPopUp
-{
-    [self closePopUp:postInfoVc];
-    [self closePopUp:postStatusVc];
+    postInfoVc = [self.storyboard instantiateViewControllerWithIdentifier:@"PostInfoViewController"];
+    postInfoVc.postInfoDict = self.postInfoDict;
     
-    popUpIsOpen = NO;
-}
-
-- (void)closePopUp:(UIViewController *)viewcontroller
-{
-    viewcontroller.view.transform = CGAffineTransformMakeScale(0.01, 0.01);
+    MZFormSheetController *formSheet = [[MZFormSheetController alloc] initWithViewController:postInfoVc];
     
-    [UIView animateWithDuration:0.3 delay:0.3 options:UIViewAnimationOptionCurveEaseOut animations:^{
-        
-        viewcontroller.view.transform = CGAffineTransformIdentity;
-        [self.view addSubview:viewcontroller.view];
-        popUpIsOpen = NO;
-    } completion:^(BOOL finished){
-        
+    formSheet.presentedFormSheetSize = CGSizeMake(300, 298);
+    //    formSheet.transitionStyle = MZFormSheetTransitionStyleSlideFromTop;
+    formSheet.shadowRadius = 2.0;
+    formSheet.shadowOpacity = 0.3;
+    formSheet.shouldDismissOnBackgroundViewTap = YES;
+    formSheet.shouldCenterVertically = YES;
+    formSheet.movementWhenKeyboardAppears = MZFormSheetWhenKeyboardAppearsCenterVertically;
+    
+    // If you want to animate status bar use this code
+    formSheet.didTapOnBackgroundViewCompletionHandler = ^(CGPoint location) {
+    
+    };
+    
+    formSheet.willPresentCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will present");
+    };
+    formSheet.transitionStyle = MZFormSheetTransitionStyleCustom;
+    
+    [MZFormSheetController sharedBackgroundWindow].formSheetBackgroundWindowDelegate = self;
+    
+    [self mz_presentFormSheetController:formSheet animated:YES completionHandler:^(MZFormSheetController *formSheetController) {
+        DDLogVerbose(@"did present");
     }];
     
-    
-    [viewcontroller removeFromParentViewController];
-    [viewcontroller.view removeFromSuperview];
+    formSheet.willDismissCompletionHandler = ^(UIViewController *presentedFSViewController) {
+        DDLogVerbose(@"will dismiss");
+    };
 }
-
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

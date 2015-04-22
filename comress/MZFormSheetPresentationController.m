@@ -29,8 +29,6 @@
 
 CGFloat const MZFormSheetPresentationControllerDefaultAnimationDuration = 0.35;
 
-static CGFloat const MZFormSheetPresentationControllerDefaultAboveKeyboardMargin = 20;
-
 static NSMutableDictionary *_instanceOfTransitionClasses = nil;
 
 @interface MZFormSheetPresentationController () <UIGestureRecognizerDelegate>
@@ -106,10 +104,7 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
         _contentViewSize = CGSizeMake(nearbyintf(contentViewSize.width), nearbyintf(contentViewSize.height));
 
         CGPoint center = self.contentViewController.view.center;
-        self.contentViewController.view.frame = CGRectMake(center.x - _contentViewController.view.frame.size.width / 2,
-                                                           center.y - _contentViewController.view.frame.size.height / 2,
-                                                           _contentViewSize.width,
-                                                           _contentViewSize.height);
+        self.contentViewController.view.frame = CGRectMake(0, 0, _contentViewSize.width, _contentViewSize.height);
         self.contentViewController.view.center = center;
         [self setupFormSheetViewControllerFrame];
     }
@@ -176,8 +171,8 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
 #pragma mark - Transitions
 
 - (void)handleEntryTransitionAnimated:(BOOL)animated {
+    [self.transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
 
-    if (self.transitionCoordinator) {
         MZFormSheetPresentationControllerTransitionHandler transitionCompletionHandler = ^(){
             if (self.didPresentContentViewControllerHandler) {
                 self.didPresentContentViewControllerHandler(self.contentViewController);
@@ -193,7 +188,8 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
         } else {
             transitionCompletionHandler();
         }
-    }
+
+    } completion:nil];
 }
 
 - (void)handleOutTransitionAnimated:(BOOL)animated {
@@ -214,7 +210,7 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
         } else {
             transitionCompletionHandler();
         }
-
+        
     } completion:nil];
 }
 
@@ -274,6 +270,7 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
 
 - (void)setupFormSheetViewController {
     self.contentViewController.view.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    self.contentViewController.view.layer.cornerRadius = 6.0;
     self.contentViewController.view.layer.masksToBounds = YES;
     self.contentViewController.view.frame = CGRectMake(0, 0, self.contentViewSize.width, self.contentViewSize.height);
     self.contentViewController.view.center = CGPointMake(CGRectGetMidX(self.view.bounds), CGRectGetMidY(self.view.bounds));
@@ -284,7 +281,7 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
         CGRect formSheetRect = self.contentViewController.view.frame;
         CGRect screenRect = [self.screenFrameWhenKeyboardVisible CGRectValue];
 
-        if (screenRect.size.height < CGRectGetMaxY(formSheetRect)) {
+        if (screenRect.size.height > formSheetRect.size.height) {
             switch (self.movementActionWhenKeyboardAppears) {
                 case MZFormSheetActionWhenKeyboardAppearsCenterVertically:
                     formSheetRect.origin.y = ([self yCoordinateBelowStatusBar] + screenRect.size.height - formSheetRect.size.height)/2 - screenRect.origin.y;
@@ -295,8 +292,6 @@ static NSMutableDictionary *_instanceOfTransitionClasses = nil;
                 case MZFormSheetActionWhenKeyboardAppearsMoveToTopInset:
                     formSheetRect.origin.y = [self topInset];
                     break;
-                case MZFormSheetActionWhenKeyboardAppearsAboveKeyboard:
-                    formSheetRect.origin.y = formSheetRect.origin.y + (screenRect.size.height - CGRectGetMaxY(formSheetRect)) - MZFormSheetPresentationControllerDefaultAboveKeyboardMargin;
                 default:
                     break;
             }

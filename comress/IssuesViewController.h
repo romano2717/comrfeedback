@@ -28,4 +28,5 @@
 @property (nonatomic, weak) IBOutlet UITableView *issuesTable;
 @property (nonatomic, weak) IBOutlet MESegmentedControl *segment;
 @property (nonatomic, weak) IBOutlet UIButton *bulbButton;
+
 @end

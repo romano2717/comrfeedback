@@ -25,8 +25,6 @@
 #import "MBProgressHUD.h"
 #import "Database.h"
 
-#import "MZFormSheetPresentationController.h"
-
 @class IssuesChatViewController;
 
 @protocol IssuesChatViewControllerDelegate <NSObject>
@@ -60,11 +58,6 @@
 @property (nonatomic, strong) NSNumber *theNewSelectedStatus;
 @property (nonatomic) BOOL isFiltered;
 
-
-@property (nonatomic) BOOL popUpIsOpen;
-/*pop-up delegate*/
-- (void)closePopUp:(UIViewController *)viewcontroller;
-
-- (void)selectedTableRow:(NSUInteger)rowNum;
+- (void)selectedTableRow:(NSNotification *)notif; //when user select a status from the pop-up
 
 @end

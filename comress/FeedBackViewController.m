@@ -120,11 +120,20 @@
         btn.enabled = NO;
     }
     
-    //disable the others address textfield until the user select Others address radio button
-    MPGTextField *othersTextField = (MPGTextField *)[self.view viewWithTag:300];
-    othersTextField.userInteractionEnabled = NO;
-    othersTextField.backgroundColor = [UIColor lightGrayColor];
-
+    if(invalidSurveyPostalCode && invalidResidentPostalCode)
+    {
+        //disable the others address textfield until the user select Others address radio button
+        MPGTextField *othersTextField = (MPGTextField *)[self.view viewWithTag:300];
+        othersTextField.userInteractionEnabled = YES;
+        othersTextField.backgroundColor = [UIColor whiteColor];
+    }
+    else
+    {
+        //disable the others address textfield until the user select Others address radio button
+        MPGTextField *othersTextField = (MPGTextField *)[self.view viewWithTag:300];
+        othersTextField.userInteractionEnabled = NO;
+        othersTextField.backgroundColor = [UIColor lightGrayColor];
+    }
     
     self.selectedFeeBackTypeArr = [[NSMutableArray alloc] init];
     self.selectedFeeBackTypeStringArr = [[NSMutableArray alloc] init];
@@ -633,17 +642,24 @@
                 dictAddInfo = [rsAddInfo resultDictionary];
             }
             
-            
-            //save the 'Others' address
-            BOOL ins = [db executeUpdate:@"insert into su_address(address,unit_no,specify_area,postal_code,block_id) values (?,?,?,?,?)",self.othersAddTxtField.text,[dictAddInfo valueForKey:@"unit_no"],[dictAddInfo valueForKey:@"specify_area"],postalCode,blockId];
-            
-            if(!ins)
+            if(self.othersAddTxtField.text != nil && self.othersAddTxtField.text.length > 0 && ![postalCode isEqualToString:@"-1"] && blockId != 0)
             {
-                *rollback = YES;
+                //save the 'Others' address
+                BOOL ins = [db executeUpdate:@"insert into su_address(address,unit_no,specify_area,postal_code,block_id) values (?,?,?,?,?)",self.othersAddTxtField.text,[dictAddInfo valueForKey:@"unit_no"],[dictAddInfo valueForKey:@"specify_area"],postalCode,blockId];
+                
+                if(!ins)
+                {
+                    *rollback = YES;
+                    return;
+                }
+                
+                client_address_id = [NSNumber numberWithLongLong:[db lastInsertRowId]];
+            }
+            else
+            {
+                [myDatabase alertMessageWithMessage:@"Please select a valid Feedback location."];
                 return;
             }
-            
-            client_address_id = [NSNumber numberWithLongLong:[db lastInsertRowId]];
         }
         
         //finally, save the feedback

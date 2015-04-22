@@ -26,7 +26,7 @@
     if(segment == 0)
     {
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            FMResultSet *rs = [db executeQuery:@"select * from su_survey where isMine = ? order by survey_date desc",[NSNumber numberWithBool:YES]];
+            FMResultSet *rs = [db executeQuery:@"select * from su_survey where isMine = ? and created_by = ? order by survey_date desc",[NSNumber numberWithBool:YES],[myDatabase.userDictionary valueForKey:@"user_id"]];
             
             while ([rs next]) {
                 //check if this survey got atleast 1 answer, if not, don't add this survery
@@ -73,7 +73,7 @@
         NSMutableDictionary *groupedDict = [[NSMutableDictionary alloc] init];
         
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            FMResultSet *rsGetSurvey = [db executeQuery:@"select created_by from su_survey where isMine = ? group by created_by order by survey_date desc",zero];
+            FMResultSet *rsGetSurvey = [db executeQuery:@"select created_by from su_survey where isMine = ? or created_by != ? group by created_by order by survey_date desc",zero,[myDatabase.userDictionary valueForKey:@"user_id"]];
             
             while ([rsGetSurvey next]) {
                 NSString *createdBy = [rsGetSurvey stringForColumn:@"created_by"];
@@ -136,7 +136,7 @@
         __block BOOL atleastOneOverdueWasFound = NO;
         
         [myDatabase.databaseQ inTransaction:^(FMDatabase *db, BOOL *rollback) {
-            FMResultSet *rs = [db executeQuery:@"select * from su_survey order by survey_date desc"];
+            FMResultSet *rs = [db executeQuery:@"select * from su_survey where isMine = ? and created_by = ? order by survey_date desc",[NSNumber numberWithBool:YES],[myDatabase.userDictionary valueForKey:@"user_id"]];
             
             while ([rs next]) {
                 
@@ -167,9 +167,6 @@
                         
                         if([rsCheckPost next])
                             atleastOneOverdueWasFound = YES;
-                        
-                        
-                        //check crm status here and date created
                     }
                 }
                 
